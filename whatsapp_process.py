@@ -134,6 +134,7 @@ for i in ax.patches:
 	ax.text(i.get_x(), i.get_height(), str(i.get_height()))
 plt.show()
 
+### calculating media/text ratio per author and plotting it
 medias_per_capita = df.groupby(['author', 'media']).count()['text']
 medias_per_capita = medias_per_capita.unstack(level=1)
 print(medias_per_capita.head())
@@ -144,6 +145,7 @@ for i in ax.patches:
 	ax.text(i.get_x(), i.get_height(), str(i.get_height()))
 plt.show()
 
+### plotting overall media/text rario
 medias = df.groupby(['media']).count()['text']
 print(medias)
 
