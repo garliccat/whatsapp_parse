@@ -57,11 +57,11 @@ def to_dict(string):
 
 ##### Parcing the raw dataset, cleaning it.
 ##### ATTENTION: Parsing only authors with names, talking telephone numbers are excluding.
-pattern = re.compile(r'(?P<timestamp>\d\d.\d\d.\d\d\d\d, \d\d:\d\d) - (?!\u200e)(?P<author>(?!\+\d \d\d\d).*?): (?P<text>.*?)(?=( \d\d.\d\d.\d\d\d\d, \d\d:\d\d| $))')
+pattern = re.compile(r'(?P<timestamp>\d\d.\d\d.\d\d\d\d, \d\d:\d\d) - (?!\u200e)(?P<author>.*?): (?P<text>.*?)(?=( \d\d.\d\d.\d\d\d\d, \d\d:\d\d| $))')
 match = re.findall(pattern, f)
 
 df = pd.DataFrame.from_dict(match)
-df = df.iloc[0:, 0:3]
+df = df.iloc[1:, 0:3]
 df.columns=['timestamp', 'author', 'text']
 df['timestamp'] = pd.to_datetime(df['timestamp'], format='%d.%m.%Y, %H:%M')
 df.set_index('timestamp', inplace=True)
@@ -89,7 +89,8 @@ df['hour'] = df.index.hour
 #### building dics and collecting info
 
 ### printing the number of messages
-print('Overall number of messages: {}'.format(df.shape[0]))
+authors_num = df.shape[0]
+print('Overall number of messages: {}'.format(authors_num))
 
 ### building the list of authors, printing it
 authors = df['author'].unique().tolist()
@@ -118,7 +119,7 @@ msg_weekly = df.resample('W').count()['text']
 words_swears_users = df.groupby('author').sum()[['words_num', 'swears_num']]
 print(words_swears_users)
 words_swears_users['percent'] = (words_swears_users['swears_num'] / words_swears_users['words_num']) * 100
-words_swears_users.sort_values(by='percent', ascending=False)
+words_swears_users = words_swears_users.sort_values(by='percent', ascending=False)
 print('\nWords vs. swears percent per author:')
 print(words_swears_users['percent'])
 print('\n')
@@ -129,7 +130,15 @@ print('\n')
 
 ### calculating and plotting overall authors messages number
 authors_count = df.groupby(['author']).count()['text']
-ax = authors_count.plot(kind='bar', title='Authors messages count', alpha=0.75)
+authors_count = authors_count.sort_values(ascending=False)
+if authors_num > 10:
+	title = 'Top 10 authors mesages count'
+	authors_count = authors_count.iloc[:10]
+else:
+	title = 'Authors messages count'
+ax = authors_count.plot(kind='bar', title=title, alpha=0.75)
+ax.set_ylabel('Messages number')
+ax.set_xlabel('Authors')
 for i in ax.patches:
 	ax.text(i.get_x(), i.get_height(), str(i.get_height()))
 plt.show()
@@ -137,10 +146,18 @@ plt.show()
 ### calculating media/text ratio per author and plotting it
 medias_per_capita = df.groupby(['author', 'media']).count()['text']
 medias_per_capita = medias_per_capita.unstack(level=1)
+medias_per_capita = medias_per_capita.sort_values(by='Text', ascending=False)
+if authors_num > 10:
+	medias_per_capita = medias_per_capita.iloc[:10, :]
+	title = 'Top 10 text / media per author'
+else:
+	title = 'Text / Media per author'	
+
 print(medias_per_capita.head())
 
-ax = medias_per_capita.plot(kind='bar', title='Text / Media per author', alpha=0.75)
+ax = medias_per_capita.plot(kind='bar', title=title, alpha=0.75)
 ax.set_ylabel('Number of messages')
+ax.set_xlabel('Authors')
 for i in ax.patches:
 	ax.text(i.get_x(), i.get_height(), str(i.get_height()))
 plt.show()
