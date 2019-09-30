@@ -3,13 +3,14 @@ from datetime import datetime as dt
 import numpy as np
 import pandas as pd
 import re
+import glob
 
 ### opening swears dictionary and log dataset
-swears = open('dataset/swear.txt', 'r', encoding="utf-8")
+swears = open('dataset/swears.txt', 'r', encoding="utf-8")
 swears = swears.read()
 swears = swears.split('\n')
 
-f = open('dataset/log.txt', 'r', encoding="utf-8")
+f = open(glob.glob('dataset/*WhatsApp*.txt')[0], 'r', encoding="utf-8")
 f = f.read()
 f = f.replace('\n', ' ')
 
@@ -100,8 +101,7 @@ print('There are {} authors in chat: {}'.format(len(authors), authors))
 print('First message date: {}'.format(min(df.index)))
 print('Last message date: {}'.format(max(df.index)))
 days = int((max(df.index) - min(df.index)).days)
-years = days / 365
-print('Chat age in days: {}\nChat age in years: {:.2f}'.format(days, years))
+print('Chat age in days: {}\nChat age in years: {:.2f}'.format(days, days / 365))
 avg_msg_hour = df.groupby('hour').count()['text'] / days
 
 ### buildig a dict (words_dict) with words from chat (text column). Not adding a column, but collecting data
@@ -117,12 +117,22 @@ msg_weekly = df.resample('W').count()['text']
 
 ### calculating swear words usage for each author
 words_swears_users = df.groupby('author').sum()[['words_num', 'swears_num']]
-print(words_swears_users)
+print(words_swears_users.head())
 words_swears_users['percent'] = (words_swears_users['swears_num'] / words_swears_users['words_num']) * 100
 words_swears_users = words_swears_users.sort_values(by='percent', ascending=False)
 print('\nWords vs. swears percent per author:')
-print(words_swears_users['percent'])
+print(words_swears_users['percent'].head())
 print('\n')
+
+### calculating the pearsons correlation matrix for each pair of authors, fetching the best of them
+corr_matrix = df.groupby(['hour', 'author']).count()['text']
+print('\n')
+corr_matrix = corr_matrix.unstack(level=-1, fill_value=0)
+corr_matrix = corr_matrix.corr()
+corr_matrix.replace(to_replace=1, value=0, inplace=True)
+corr_matrix = corr_matrix.stack().sort_values(ascending=False).drop_duplicates()
+print('Top authors with messages timing correlation:')
+print(corr_matrix.head())
 
 
 ##### PLOTTING PART
@@ -137,10 +147,12 @@ if authors_num > 10:
 else:
 	title = 'Authors messages count'
 ax = authors_count.plot(kind='bar', title=title, alpha=0.75)
-ax.set_ylabel('Messages number')
+ax.set_ylabel('Number of messages')
 ax.set_xlabel('Authors')
 for i in ax.patches:
-	ax.text(i.get_x(), i.get_height(), str(i.get_height()))
+	ax.text(i.get_x(), i.get_height(), str(int(i.get_height())))
+plt.setp(ax.get_xticklabels(), rotation=30, horizontalalignment='right') # rotating long xticks and make them confy to read
+plt.tight_layout()
 plt.show()
 
 ### calculating media/text ratio per author and plotting it
@@ -159,20 +171,33 @@ ax = medias_per_capita.plot(kind='bar', title=title, alpha=0.75)
 ax.set_ylabel('Number of messages')
 ax.set_xlabel('Authors')
 for i in ax.patches:
-	ax.text(i.get_x(), i.get_height(), str(i.get_height()))
+	ax.text(i.get_x(), i.get_height(), str(int(i.get_height())))
+plt.setp(ax.get_xticklabels(), rotation=30, horizontalalignment='right') # rotating long xticks and make them confy to read
+plt.tight_layout()
 plt.show()
 
 ### plotting overall media/text rario
+msg_weekly.plot(kind='line', title='Messages history', alpha=0.75)
+plt.xlabel('Date')
+plt.ylabel('Number of messages')
+plt.xticks(rotation=0)
+plt.tight_layout()
+plt.show()
+
 medias = df.groupby(['media']).count()['text']
 print(medias)
-
-msg_weekly.plot(kind='line', title='Messages history', alpha=0.75)
+medias.plot(kind='bar', title='Images/Videos/Funny shit percentage', width=0.20)
+plt.xlabel('Date')
+plt.ylabel('Number of messages')
+plt.xticks(rotation=0)
+plt.tight_layout()
 plt.show()
 
-medias.plot(kind='bar', title='Images/Videos/Funny shit percentage')
-plt.show()
-
-avg_msg_hour.plot(kind='bar', title='Average number of messages per hour', alpha=0.75)
+avg_msg_hour.plot(kind='bar', title='Average number of messages per hour', alpha=0.75, )
+plt.xlabel('Hour')
+plt.ylabel('Number of messages')
+plt.xticks(rotation=0)
+plt.tight_layout()
 plt.show()
 
 print('Top 20 chart of words used in chat, longer then 3 characters: \n', words_dict[:20])
