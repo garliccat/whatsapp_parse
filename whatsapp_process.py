@@ -57,7 +57,6 @@ def to_dict(string):
 
 
 ##### Parcing the raw dataset, cleaning it.
-##### ATTENTION: Parsing only authors with names, talking telephone numbers are excluding.
 pattern = re.compile(r'(?P<timestamp>\d\d.\d\d.\d\d\d\d, \d\d:\d\d) - (?!\u200e)(?P<author>.*?): (?P<text>.*?)(?=( \d\d.\d\d.\d\d\d\d, \d\d:\d\d| $))')
 match = re.findall(pattern, f)
 
