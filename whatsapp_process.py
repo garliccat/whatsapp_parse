@@ -176,7 +176,7 @@ plt.setp(ax.get_xticklabels(), rotation=30, horizontalalignment='right') # rotat
 plt.tight_layout()
 plt.show()
 
-### plotting overall media/text rario
+### plotting overall messages history
 msg_weekly.plot(kind='line', title='Messages history', alpha=0.75)
 plt.xlabel('Date')
 plt.ylabel('Number of messages')
