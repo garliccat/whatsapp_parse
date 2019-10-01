@@ -1,1 +1,2 @@
-# /dataset/log.txt
+.gitignore
+/dataset/*WhatsApp*.txt
