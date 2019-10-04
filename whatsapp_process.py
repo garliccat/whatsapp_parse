@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import re
 import glob
+import markovify
 
 ### opening swears dictionary and log dataset
 swears = open('dataset/swears.txt', 'r', encoding="utf-8")
@@ -71,7 +72,7 @@ print(df.head())
 ##### First of all we will squeeze out some additional columns with insights from the current dataset
 
 #### ADDING COLUMNS
-
+'''
 ### adding column with swears number in each message
 df['swears_num'] = df['text'].map(swear_count)
 # df.sort_values('swears_num', inplace=True)
@@ -202,3 +203,25 @@ plt.show()
 print('Top 20 chart of words used in chat, longer then 3 characters: \n', words_dict[:20])
 print('\n')
 print('Top 20 chart of swear words: \n', swears_dict[:20])
+'''
+
+### Markov's chain message generator
+authors = df['author'].unique().tolist()
+author_index = 0
+
+print('Автор: ', authors[author_index])
+
+messages = df.loc[(df['author'] == authors[author_index]) & (df['text'].str.contains('<') == False)]['text']
+messages ='\n'.join(messages.tolist())
+text_model = markovify.NewlineText(messages)
+
+number_of_lines = 20
+count = 0
+while True:	### Skiping None values
+	output = text_model.make_sentence()
+	if output != None:
+		print(output)
+		if count == number_of_lines:
+			break
+		else:
+			count += 1
