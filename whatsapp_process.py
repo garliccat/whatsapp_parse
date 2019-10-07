@@ -207,7 +207,7 @@ print('Top 20 chart of swear words: \n', swears_dict[:20])
 
 ### Markov's chain message generator
 authors = df['author'].unique().tolist()
-author_index = 0
+author_index = 1
 
 print('Автор: ', authors[author_index])
 
