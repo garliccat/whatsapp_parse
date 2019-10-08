@@ -213,7 +213,7 @@ print('Автор: ', authors[author_index])
 
 messages = df.loc[(df['author'] == authors[author_index]) & (df['text'].str.contains('<') == False)]['text']
 messages ='\n'.join(messages.tolist())
-text_model = markovify.NewlineText(messages)
+text_model = markovify.NewlineText(messages, well_formed=False)
 
 number_of_lines = 20
 count = 0
