@@ -39,7 +39,7 @@ def swears_collect(input_string):
 	### function for adding swear words to global swear_dict dictionary from input input_string
 	input_string = input_string.lower().split()
 	for word in input_string:
-		word = word.translate(str.maketrans('', '', string.punctuation))
+		word = word.translate(str.maketrans('', '', string.punctuation + '«»'))
 		for swear in swears:
 			if swear in word:
 				if word in swears_dict:
@@ -53,7 +53,7 @@ def to_dict(input_string):
 	if (input_string[0] != '<' and input_string[-1] != '>'):
 		input_string = input_string.split()
 		for word in input_string:
-			word = word.translate(str.maketrans('', '', string.punctuation))
+			word = word.translate(str.maketrans('', '', string.punctuation + '«»'))
 			if (word in words_dict and len(word) > 3):
 				words_dict[word] += 1
 			else:
@@ -69,6 +69,8 @@ df = df.iloc[1:, 0:3]
 df.columns=['timestamp', 'author', 'text']
 df['timestamp'] = pd.to_datetime(df['timestamp'], format='%d.%m.%Y, %H:%M')
 df.set_index('timestamp', inplace=True)
+
+'''
 
 print(df.head())
 
@@ -89,7 +91,6 @@ df['media'] = df['text'].map(lambda x: 'Media' if (x[0] == '<' and x[-1] == '>')
 ### adding 'hour' column for further grouping
 df['hour'] = df.index.hour
 
-
 #### building dics and collecting info
 
 ### printing the number of messages
@@ -107,6 +108,8 @@ days = int((max(df.index) - min(df.index)).days)
 print('Chat age in days: {}\nChat age in years: {:.2f}'.format(days, days / 365))
 avg_msg_hour = df.groupby('hour').count()['text'] / days
 
+'''
+
 ### buildig a dict (words_dict) with words from chat (text column). Not adding a column, but collecting data
 df['text'].map(to_dict)
 words_dict = sorted(words_dict.items(), key=lambda x: x[1], reverse=True)
@@ -114,6 +117,8 @@ words_dict = sorted(words_dict.items(), key=lambda x: x[1], reverse=True)
 ### building a dict of swears usage (swears_dict) from words_dict. Not adding a column, but collecting data
 df['text'].map(swears_collect)
 swears_dict = sorted(swears_dict.items(), key=lambda x: x[1], reverse=True)
+
+'''
 
 ### calculating weekly messages number for alltime
 msg_weekly = df.resample('W').count()['text']
@@ -203,14 +208,16 @@ plt.xticks(rotation=0)
 plt.tight_layout()
 plt.show()
 
+'''
+
 print('Top 20 chart of words used in chat, longer then 3 characters: \n', words_dict[:20])
 print('\n')
 print('Top 20 chart of swear words: \n', swears_dict[:20])
 
-
+'''
 ### Markov's chain message generator
 authors = df['author'].unique().tolist()
-author_index = 0
+author_index = 1
 
 print('\nАвтор: ', authors[author_index])
 
@@ -229,3 +236,4 @@ while True:	### Skiping None values
 			break
 		else:
 			count += 1
+'''
