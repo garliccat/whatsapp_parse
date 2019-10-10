@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import re
 import glob
+import string
 import markovify
 
 ### opening swears dictionary and log dataset
@@ -21,23 +22,24 @@ words_dict = {}
 plt.style.use('ggplot')
 
 
-def words_count(string):
-	### function returns the number of words in string
-	if (string[0] != '<' and string[-1] != '>'):
-		return len(string.split())
+def words_count(input_string):
+	### function returns the number of words in input_string
+	if (input_string[0] != '<' and input_string[-1] != '>'):
+		return len(input_string.split())
 
-def swear_count(string):
-	### function returns the number of swear words found in input string
-	string = string.lower()
+def swear_count(input_string):
+	### function returns the number of swear words found in input input_string
+	input_string = input_string.lower()
 	count = 0
 	for word in swears:
-		count += string.count(word)		
+		count += input_string.count(word)		
 	return count
 
-def swears_collect(string):
-	### function for adding swear words to global swear_dict dictionary from input string
-	string = string.lower().split()
-	for word in string:
+def swears_collect(input_string):
+	### function for adding swear words to global swear_dict dictionary from input input_string
+	input_string = input_string.lower().split()
+	for word in input_string:
+		word = word.translate(str.maketrans('', '', string.punctuation + '«»'))
 		for swear in swears:
 			if swear in word:
 				if word in swears_dict:
@@ -45,12 +47,13 @@ def swears_collect(string):
 				else:
 					swears_dict[word] = 1
 	
-def to_dict(string):
-	### fucntion for adding all words from input string to global words_dict dictionary
-	string = string.lower()
-	if (string[0] != '<' and string[-1] != '>'):
-		string = string.split()
-		for word in string:	
+def to_dict(input_string):
+	### fucntion for adding all words from input input_string to global words_dict dictionary
+	input_string = input_string.lower()
+	if (input_string[0] != '<' and input_string[-1] != '>'):
+		input_string = input_string.split()
+		for word in input_string:
+			word = word.translate(str.maketrans('', '', string.punctuation + '«»'))
 			if (word in words_dict and len(word) > 3):
 				words_dict[word] += 1
 			else:
@@ -67,12 +70,14 @@ df.columns=['timestamp', 'author', 'text']
 df['timestamp'] = pd.to_datetime(df['timestamp'], format='%d.%m.%Y, %H:%M')
 df.set_index('timestamp', inplace=True)
 
+'''
+
 print(df.head())
 
 ##### First of all we will squeeze out some additional columns with insights from the current dataset
 
 #### ADDING COLUMNS
-'''
+
 ### adding column with swears number in each message
 df['swears_num'] = df['text'].map(swear_count)
 # df.sort_values('swears_num', inplace=True)
@@ -85,7 +90,6 @@ df['media'] = df['text'].map(lambda x: 'Media' if (x[0] == '<' and x[-1] == '>')
 
 ### adding 'hour' column for further grouping
 df['hour'] = df.index.hour
-
 
 #### building dics and collecting info
 
@@ -104,6 +108,8 @@ days = int((max(df.index) - min(df.index)).days)
 print('Chat age in days: {}\nChat age in years: {:.2f}'.format(days, days / 365))
 avg_msg_hour = df.groupby('hour').count()['text'] / days
 
+'''
+
 ### buildig a dict (words_dict) with words from chat (text column). Not adding a column, but collecting data
 df['text'].map(to_dict)
 words_dict = sorted(words_dict.items(), key=lambda x: x[1], reverse=True)
@@ -111,6 +117,8 @@ words_dict = sorted(words_dict.items(), key=lambda x: x[1], reverse=True)
 ### building a dict of swears usage (swears_dict) from words_dict. Not adding a column, but collecting data
 df['text'].map(swears_collect)
 swears_dict = sorted(swears_dict.items(), key=lambda x: x[1], reverse=True)
+
+'''
 
 ### calculating weekly messages number for alltime
 msg_weekly = df.resample('W').count()['text']
@@ -200,23 +208,26 @@ plt.xticks(rotation=0)
 plt.tight_layout()
 plt.show()
 
+'''
+
 print('Top 20 chart of words used in chat, longer then 3 characters: \n', words_dict[:20])
 print('\n')
 print('Top 20 chart of swear words: \n', swears_dict[:20])
-'''
 
+'''
 ### Markov's chain message generator
 authors = df['author'].unique().tolist()
 author_index = 1
 
-print('Автор: ', authors[author_index])
+print('\nАвтор: ', authors[author_index])
 
 messages = df.loc[(df['author'] == authors[author_index]) & (df['text'].str.contains('<') == False)]['text']
 messages ='\n'.join(messages.tolist())
-text_model = markovify.NewlineText(messages)
+text_model = markovify.NewlineText(messages, well_formed=False)
 
 number_of_lines = 20
 count = 0
+
 while True:	### Skiping None values
 	output = text_model.make_sentence()
 	if output != None:
@@ -225,3 +236,4 @@ while True:	### Skiping None values
 			break
 		else:
 			count += 1
+'''
