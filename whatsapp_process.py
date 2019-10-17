@@ -6,6 +6,7 @@ import re
 import glob
 import string
 import markovify
+from collections import Counter
 
 ### opening swears dictionary and log dataset
 swears = open('dataset/swears.txt', 'r', encoding="utf-8")
@@ -17,8 +18,8 @@ f = f.read()
 f = f.replace('\n', ' ')
 
 ### initializing global variables
-swears_dict = {}
-words_dict = {}
+swears_dict = Counter()
+words_dict = Counter()
 plt.style.use('ggplot')
 
 
@@ -42,10 +43,7 @@ def swears_collect(input_string):
 		word = word.translate(str.maketrans('', '', string.punctuation + '«»'))
 		for swear in swears:
 			if swear in word:
-				if word in swears_dict:
-					swears_dict[word] += 1
-				else:
-					swears_dict[word] = 1
+				swears_dict[word] += 1
 	
 def to_dict(input_string):
 	### fucntion for adding all words from input input_string to global words_dict dictionary
@@ -54,11 +52,8 @@ def to_dict(input_string):
 		input_string = input_string.split()
 		for word in input_string:
 			word = word.translate(str.maketrans('', '', string.punctuation + '«»'))
-			if (word in words_dict and len(word) > 3):
+			if len(word) > 3:
 				words_dict[word] += 1
-			else:
-				words_dict[word] = 1
-
 
 ##### Parcing the raw dataset, cleaning it.
 pattern = re.compile(r'(?P<timestamp>\d\d.\d\d.\d\d\d\d, \d\d:\d\d) - (?!\u200e)(?P<author>.*?): (?P<text>.*?)(?=( \d\d.\d\d.\d\d\d\d, \d\d:\d\d| $))')
@@ -77,11 +72,11 @@ print(df.head())
 ##### First of all we will squeeze out some additional columns with insights from the current dataset
 
 #### ADDING COLUMNS
-
+'''
 ### adding column with swears number in each message
 df['swears_num'] = df['text'].map(swear_count)
 # df.sort_values('swears_num', inplace=True)
-
+'''
 ### adding column with all words in message number
 df['words_num'] = df['text'].map(words_count)
 
@@ -112,11 +107,11 @@ avg_msg_hour = df.groupby('hour').count()['text'] / days
 
 ### buildig a dict (words_dict) with words from chat (text column). Not adding a column, but collecting data
 df['text'].map(to_dict)
-words_dict = sorted(words_dict.items(), key=lambda x: x[1], reverse=True)
+# words_dict = sorted(words_dict.items(), key=lambda x: x[1], reverse=True)
 
 ### building a dict of swears usage (swears_dict) from words_dict. Not adding a column, but collecting data
 df['text'].map(swears_collect)
-swears_dict = sorted(swears_dict.items(), key=lambda x: x[1], reverse=True)
+# swears_dict = sorted(swears_dict.items(), key=lambda x: x[1], reverse=True)
 
 '''
 
@@ -210,9 +205,9 @@ plt.show()
 
 '''
 
-print('Top 20 chart of words used in chat, longer then 3 characters: \n', words_dict[:20])
+print('Top 20 chart of words used in chat, longer then 3 characters: \n', words_dict.most_common(20))
 print('\n')
-print('Top 20 chart of swear words: \n', swears_dict[:20])
+print('Top 20 chart of swear words: \n', swears_dict.most_common(20))
 
 '''
 ### Markov's chain message generator
