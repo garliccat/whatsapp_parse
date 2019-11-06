@@ -55,7 +55,7 @@ def to_dict(input_string):
 		for word in input_string:
 			word = word.translate(str.maketrans('', '', string.punctuation + '«»' + '—' + '–'))
 			if (word not in stopwords) and \
-			(word not in string.punctuation) and\
+			(word not in string.punctuation) and \
 			(word[0] not in emoji.UNICODE_EMOJI):
 				words_dict[word] += 1
 
