@@ -10,7 +10,7 @@ The way to export data from app:
 3. Tap "Export chat"
 4. Without media.
 
-Then put the exported file into `dataset` folder.   
+Then put the exported file into `/dataset` folder.   
 swears.txt file - swear words dictionary. Feel free to add your own words.   
 
 Prints out the basic stats on chat. History stats, correlations, builds dict of words, etc.   
