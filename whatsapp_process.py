@@ -3,9 +3,10 @@ from datetime import datetime as dt
 import numpy as np
 import pandas as pd
 import re
-import glob
 import string
+import glob
 import markovify
+import emoji
 from collections import Counter
 
 ### opening swears dictionary and log dataset
@@ -16,6 +17,7 @@ swears = swears.split('\n')
 f = open(glob.glob('dataset/*WhatsApp*.txt')[0], 'r', encoding="utf-8")
 f = f.read()
 f = f.replace('\n', ' ')
+stopwords = open('dataset/stopwords-ru.txt', 'r', encoding='utf-8').read().splitlines()
 
 ### initializing global variables
 swears_dict = Counter()
@@ -51,8 +53,10 @@ def to_dict(input_string):
 	if (input_string[0] != '<' and input_string[-1] != '>'):
 		input_string = input_string.split()
 		for word in input_string:
-			word = word.translate(str.maketrans('', '', string.punctuation + '«»'))
-			if len(word) > 3:
+			word = word.translate(str.maketrans('', '', string.punctuation + '«»' + '—' + '–'))
+			if (word not in stopwords) and \
+			(word not in string.punctuation) and\
+			(word[0] not in emoji.UNICODE_EMOJI):
 				words_dict[word] += 1
 
 ##### Parcing the raw dataset, cleaning it.
@@ -65,18 +69,17 @@ df.columns=['timestamp', 'author', 'text']
 df['timestamp'] = pd.to_datetime(df['timestamp'], format='%d.%m.%Y, %H:%M')
 df.set_index('timestamp', inplace=True)
 
-'''
 
 print(df.head())
 
 ##### First of all we will squeeze out some additional columns with insights from the current dataset
 
 #### ADDING COLUMNS
-'''
+
 ### adding column with swears number in each message
 df['swears_num'] = df['text'].map(swear_count)
 # df.sort_values('swears_num', inplace=True)
-'''
+
 ### adding column with all words in message number
 df['words_num'] = df['text'].map(words_count)
 
@@ -103,17 +106,11 @@ days = int((max(df.index) - min(df.index)).days)
 print('Chat age in days: {}\nChat age in years: {:.2f}'.format(days, days / 365))
 avg_msg_hour = df.groupby('hour').count()['text'] / days
 
-'''
-
 ### buildig a dict (words_dict) with words from chat (text column). Not adding a column, but collecting data
 df['text'].map(to_dict)
-# words_dict = sorted(words_dict.items(), key=lambda x: x[1], reverse=True)
 
 ### building a dict of swears usage (swears_dict) from words_dict. Not adding a column, but collecting data
 df['text'].map(swears_collect)
-# swears_dict = sorted(swears_dict.items(), key=lambda x: x[1], reverse=True)
-
-'''
 
 ### calculating weekly messages number for alltime
 msg_weekly = df.resample('W').count()['text']
@@ -203,13 +200,12 @@ plt.xticks(rotation=0)
 plt.tight_layout()
 plt.show()
 
-'''
 
-print('Top 20 chart of words used in chat, longer then 3 characters: \n', words_dict.most_common(20))
+print('Top 20 of words used in chat: \n', words_dict.most_common(20))
 print('\n')
 print('Top 20 chart of swear words: \n', swears_dict.most_common(20))
 
-'''
+
 ### Markov's chain message generator
 authors = df['author'].unique().tolist()
 author_index = 1
@@ -231,4 +227,3 @@ while True:	### Skiping None values
 			break
 		else:
 			count += 1
-'''
