@@ -1,5 +1,5 @@
 # WhatsApp chat analyzer
-[!][/images/whatsapp.png]
+![](/images/whatsapp.png)
 
 Scans the chat and shows dependencies.   
 Analyze the chat for swear words and its usage.   
