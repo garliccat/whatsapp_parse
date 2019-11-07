@@ -48,14 +48,15 @@ def swears_collect(input_string):
 				swears_dict[word] += 1
 	
 def to_dict(input_string):
-	### fucntion for adding all words from input input_string to global words_dict dictionary
+	### function for adding all words from input input_string to global words_dict dictionary
+	### skiping punctuation characters, emojies and media messages
 	input_string = input_string.lower()
 	if (input_string[0] != '<' and input_string[-1] != '>'):
 		input_string = input_string.split()
 		for word in input_string:
 			word = word.translate(str.maketrans('', '', string.punctuation + '«»' + '—' + '–'))
 			if (word not in stopwords) and \
-			(word not in string.punctuation) and\
+			(word not in string.punctuation) and \
 			(word[0] not in emoji.UNICODE_EMOJI):
 				words_dict[word] += 1
 
@@ -208,9 +209,9 @@ print('Top 20 chart of swear words: \n', swears_dict.most_common(20))
 
 ### Markov's chain message generator
 authors = df['author'].unique().tolist()
-author_index = 1
+author_index = 0
 
-print('\nАвтор: ', authors[author_index])
+print('\nАвтор: ', authors[author_index], '\n')
 
 messages = df.loc[(df['author'] == authors[author_index]) & (df['text'].str.contains('<') == False)]['text']
 messages ='\n'.join(messages.tolist())
