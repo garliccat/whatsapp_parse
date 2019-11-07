@@ -1,6 +1,6 @@
 # WhatsApp chat analyzer
-![](/images/whatsapp.png)
-![](https://www.blogger.com/img/blogger-logotype-color-black-1x.png)[Jupyter Notebook rendered on my blog][on_blog]
+![](/images/whatsapp.png)   
+[Jupyter Notebook rendered on my blog][on_blog]
 
 Scans the chat and shows dependencies.   
 Analyze the chat for swear words and its usage.   
