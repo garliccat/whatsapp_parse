@@ -26,4 +26,4 @@ To be done:
 - Per user messaging time tracking in order to calculate the daily life and habits,   
 - Some more weird stuff to analyze people.
 
-[on_blog]: https://entropyminimization.blogspot.com/
+[on_blog]: https://entropyminimization.blogspot.com/2019/11/whatsapp-chats-analyzer.html
