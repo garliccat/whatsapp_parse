@@ -1,5 +1,6 @@
 # WhatsApp chat analyzer
 ![](/images/whatsapp.png)
+![](https://www.blogger.com/img/blogger-logotype-color-black-1x.png)[Jupyter Notebook rendered on my blog][on_blog]
 
 Scans the chat and shows dependencies.   
 Analyze the chat for swear words and its usage.   
@@ -24,3 +25,5 @@ To be done:
 - Collector of names, places and events using Natasha library,   
 - Per user messaging time tracking in order to calculate the daily life and habits,   
 - Some more weird stuff to analyze people.
+
+[on_blog]: https://entropyminimization.blogspot.com/
