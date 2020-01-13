@@ -4,12 +4,16 @@ import numpy as np
 import pandas as pd
 import re
 import string
+from nltk.corpus import stopwords
 import glob
 import markovify
 import emoji
 from collections import Counter
+import seaborn as sns
 
-### opening swears dictionary and log dataset
+sns.set()
+
+# opening swears dictionary and log dataset
 swears = open('dataset/swears.txt', 'r', encoding="utf-8")
 swears = swears.read()
 swears = swears.split('\n')
@@ -17,106 +21,110 @@ swears = swears.split('\n')
 f = open(glob.glob('dataset/*WhatsApp*.txt')[0], 'r', encoding="utf-8")
 f = f.read()
 f = f.replace('\n', ' ')
-stopwords = open('dataset/stopwords-ru.txt', 'r', encoding='utf-8').read().splitlines()
 
-### initializing global variables
+# initializing global variables
 swears_dict = Counter()
 words_dict = Counter()
 plt.style.use('ggplot')
 
 
 def words_count(input_string):
-	### function returns the number of words in input_string
-	if (input_string[0] != '<' and input_string[-1] != '>'):
+	# function returns the number of words in input_string
+	if input_string[0] != '<' and input_string[-1] != '>':
 		return len(input_string.split())
 
+
 def swear_count(input_string):
-	### function returns the number of swear words found in input input_string
+	# function returns the number of swear words found in input input_string
 	input_string = input_string.lower()
 	count = 0
 	for word in swears:
 		count += input_string.count(word)		
 	return count
 
+
 def swears_collect(input_string):
-	### function for adding swear words to global swear_dict dictionary from input input_string
+	# function for adding swear words to global swear_dict dictionary from input input_string
 	input_string = input_string.lower().split()
 	for word in input_string:
 		word = word.translate(str.maketrans('', '', string.punctuation + '«»'))
 		for swear in swears:
 			if swear in word:
 				swears_dict[word] += 1
-	
+
+
 def to_dict(input_string):
-	### function for adding all words from input input_string to global words_dict dictionary
-	### skiping punctuation characters, emojies and media messages
+	# function for adding all words from input input_string to global words_dict dictionary
+	# skiping punctuation characters, emojies and media messages
 	input_string = input_string.lower()
-	if (input_string[0] != '<' and input_string[-1] != '>'):
+	if input_string[0] != '<' and input_string[-1] != '>':
 		input_string = input_string.split()
 		for word in input_string:
 			word = word.translate(str.maketrans('', '', string.punctuation + '«»' + '—' + '–'))
-			if (word not in stopwords) and \
+			if (word not in stopwords.words('russian')) and \
 			(word not in string.punctuation) and \
 			(word[0] not in emoji.UNICODE_EMOJI):
 				words_dict[word] += 1
 
-##### Parcing the raw dataset, cleaning it.
+
+# Parcing the raw dataset, cleaning it.
 pattern = re.compile(r'(?P<timestamp>\d\d.\d\d.\d\d\d\d, \d\d:\d\d) - (?!\u200e)(?P<author>.*?): (?P<text>.*?)(?=( \d\d.\d\d.\d\d\d\d, \d\d:\d\d| $))')
 match = re.findall(pattern, f)
 
 df = pd.DataFrame.from_dict(match)
 df = df.iloc[1:, 0:3]
-df.columns=['timestamp', 'author', 'text']
+df.columns = ['timestamp', 'author', 'text']
 df['timestamp'] = pd.to_datetime(df['timestamp'], format='%d.%m.%Y, %H:%M')
 df.set_index('timestamp', inplace=True)
 
 
 print(df.head())
 
-##### First of all we will squeeze out some additional columns with insights from the current dataset
+### First of all we will squeeze out some additional columns with insights from the current dataset
 
-#### ADDING COLUMNS
+# ADDING COLUMNS
 
-### adding column with swears number in each message
+# adding column with swears number in each message
 df['swears_num'] = df['text'].map(swear_count)
 # df.sort_values('swears_num', inplace=True)
 
-### adding column with all words in message number
+# adding column with all words in message number
 df['words_num'] = df['text'].map(words_count)
 
-### adding column with boolean whether the message is just a meme or video
+# adding column with boolean whether the message is just a meme or video
 df['media'] = df['text'].map(lambda x: 'Media' if (x[0] == '<' and x[-1] == '>') else 'Text')
 
-### adding 'hour' column for further grouping
+# adding 'hour' column for further grouping
 df['hour'] = df.index.hour
+df['dayofweek'] = df.index.dayofweek
 
-#### building dics and collecting info
+# building dics and collecting info
 
-### printing the number of messages
+# printing the number of messages
 authors_num = df.shape[0]
 print('Overall number of messages: {}'.format(authors_num))
 
-### building the list of authors, printing it
+# building the list of authors, printing it
 authors = df['author'].unique().tolist()
 print('There are {} authors in chat: {}'.format(len(authors), authors))
 
-### printing first message, last message, chat age
+# printing first message, last message, chat age
 print('First message date: {}'.format(min(df.index)))
 print('Last message date: {}'.format(max(df.index)))
 days = int((max(df.index) - min(df.index)).days)
 print('Chat age in days: {}\nChat age in years: {:.2f}'.format(days, days / 365))
 avg_msg_hour = df.groupby('hour').count()['text'] / days
 
-### buildig a dict (words_dict) with words from chat (text column). Not adding a column, but collecting data
+# buildig a dict (words_dict) with words from chat (text column). Not adding a column, but collecting data
 df['text'].map(to_dict)
 
-### building a dict of swears usage (swears_dict) from words_dict. Not adding a column, but collecting data
+# building a dict of swears usage (swears_dict) from words_dict. Not adding a column, but collecting data
 df['text'].map(swears_collect)
 
-### calculating weekly messages number for alltime
+# calculating weekly messages number for alltime
 msg_weekly = df.resample('W').count()['text']
 
-### calculating swear words usage for each author
+# calculating swear words usage for each author
 words_swears_users = df.groupby('author').sum()[['words_num', 'swears_num']]
 print(words_swears_users.head())
 words_swears_users['percent'] = (words_swears_users['swears_num'] / words_swears_users['words_num']) * 100
@@ -125,7 +133,7 @@ print('\nWords vs. swears percent per author:')
 print(words_swears_users['percent'].head())
 print('\n')
 
-### calculating the pearsons correlation matrix for each pair of authors, fetching the best of them
+# calculating the pearsons correlation matrix for each pair of authors, fetching the best of them
 corr_matrix = df.groupby(['hour', 'author']).count()['text']
 print('\n')
 corr_matrix = corr_matrix.unstack(level=-1, fill_value=0)
@@ -136,14 +144,14 @@ print('Top authors with messages timing correlation:')
 print(corr_matrix.head())
 
 
-##### PLOTTING PART
-### plots media/text percentage
+### PLOTTING PART
+# plots media/text percentage
 
-### calculating and plotting overall authors messages number
+# calculating and plotting overall authors messages number
 authors_count = df.groupby(['author']).count()['text']
 authors_count = authors_count.sort_values(ascending=False)
 if authors_num > 10:
-	title = 'Top 10 authors mesages count'
+	title = 'Top 10 authors messages count'
 	authors_count = authors_count.iloc[:10]
 else:
 	title = 'Authors messages count'
@@ -156,7 +164,7 @@ plt.setp(ax.get_xticklabels(), rotation=30, horizontalalignment='right') # rotat
 plt.tight_layout()
 plt.show()
 
-### calculating media/text ratio per author and plotting it
+# calculating media/text ratio per author and plotting it
 medias_per_capita = df.groupby(['author', 'media']).count()['text']
 medias_per_capita = medias_per_capita.unstack(level=1)
 medias_per_capita = medias_per_capita.sort_values(by='Text', ascending=False)
@@ -202,6 +210,18 @@ plt.tight_layout()
 plt.show()
 
 
+dayhour = df.groupby(by=['dayofweek', 'hour']).count()['text'].unstack()
+weekdays = {0:'Пн', 1:'Вт', 2:'Ср', 3:'Чт', 4:'Пт', 5:'Сб', 6:'Вс'}
+df.index = df.index.map(weekdays)
+# dayhour.sort_index(inplace=True)
+sns.heatmap(dayhour, cmap='viridis')
+plt.title('Messages per hour in day of week')
+plt.xlabel('Hour')
+plt.ylabel('Day of week')
+plt.tight_layout()
+plt.show()
+
+
 print('Top 20 of words used in chat: \n', words_dict.most_common(20))
 print('\n')
 print('Top 20 chart of swear words: \n', swears_dict.most_common(20))
@@ -222,7 +242,7 @@ count = 0
 
 while True:	### Skiping None values
 	output = text_model.make_sentence()
-	if output != None:
+	if output is not None:
 		print(output)
 		if count == number_of_lines:
 			break
